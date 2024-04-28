@@ -1,4 +1,9 @@
+from tkinter import *
 import random
+
+window = Tk()
+window.title("Tic-tac-toe")
+
 board = ["-", "-", "-",
          "-", "-", "-",
          "-", "-", "-"]
@@ -13,24 +18,18 @@ def printBoard(board):
     print("__________")
     print(board[6] + " | " + board[7] + " | " + board[8])
 
+def playerInput(position):
+    global currentPlayer, gameRunning
+    if board[position] == "-" and gameRunning:
+        board[position] = currentPlayer
+        button_list[position].config(text=currentPlayer)
+        switchPlayer()
+        if checkWin() or checkTie():
+            gameRunning = False
+        if currentPlayer == "O" and gameRunning:
+            computer()
 
-def playerInput(board):
-    try:
-        inp = int(input("Enter a number 1-9: "))
-        if inp >= 1 and inp <= 9 and board[inp-1] == "-":
-            board[inp-1] = currentPlayer
-            return True
-        else:
-            print("Oops player is already in that spot!")
-
-    except ValueError:
-        print("Oops, please enter a valid number!")
-        return False
-
-
-
-
-def checkHorizintle(board):
+def checkHorizontal():
     global winner
     if board[0] == board[1] == board[2] and board[1] != "-":
         winner = board[0]
@@ -41,9 +40,9 @@ def checkHorizintle(board):
     elif board[6] == board[7] == board[8] and board[6] != "-":
         winner = board[6]
         return True
+    return False
 
-
-def checkRow(board):
+def checkVertical():
     global winner
     if board[0] == board[3] == board[6] and board[0] != "-":
         winner = board[0]
@@ -54,8 +53,9 @@ def checkRow(board):
     elif board[2] == board[5] == board[8] and board[2] != "-":
         winner = board[2]
         return True
+    return False
 
-def checkDiag(board):
+def checkDiagonal():
     global winner
     if board[0] == board[4] == board[8] and board[0] != "-":
         winner = board[0]
@@ -63,21 +63,21 @@ def checkDiag(board):
     elif board[2] == board[4] == board[6] and board[2] != "-":
         winner = board[2]
         return True
-
-def checkTie(board):
-    global gameRunning
-    if "-" not in board:
-        printBoard(board)
-        print("It is a tie!")
-        gameRunning = False
+    return False
 
 def checkWin():
-    global gameRunning
-    if checkDiag(board) or checkHorizintle(board) or checkRow(board):
-        print(f"the winner is {winner}")
-        gameRunning = False
-        printBoard(board)
+    global winner
+    if checkDiagonal() or checkHorizontal() or checkVertical():
+        winner_label.config(text=f"The winner is {winner}!")
+        return True
+    return False
 
+def checkTie():
+    global gameRunning
+    if "-" not in board:
+        winner_label.config(text="It's a tie!")
+        return True
+    return False
 
 def switchPlayer():
     global currentPlayer
@@ -85,23 +85,45 @@ def switchPlayer():
         currentPlayer = "O"
     else:
         currentPlayer = "X"
+    label.config(text=currentPlayer + "'s turn")
 
+def restart_game():
+    global board, currentPlayer, winner, gameRunning
+    board = ["-", "-", "-",
+             "-", "-", "-",
+             "-", "-", "-"]
+    currentPlayer = "X"
+    winner = None
+    gameRunning = True
+    for btn in button_list:
+        btn.config(text="-")
+    label.config(text=currentPlayer + "'s turn")
+    winner_label.config(text="")
 
-def computer(board):
-    while currentPlayer == "O":
-        position = random.randint(0,8)
-        if board[position] == "-":
-            board[position] = "O"
-            switchPlayer()
-
-while gameRunning:
-    printBoard(board)
-    player_result = playerInput(board)
-
-    if player_result == True:
-        checkTie(board)
-        checkWin()
+def computer():
+    global currentPlayer
+    if currentPlayer == "O":
+        position = random.randint(0, 8)
+        while board[position] != "-":
+            position = random.randint(0, 8)
+        board[position] = currentPlayer
+        button_list[position].config(text=currentPlayer)
         switchPlayer()
-        computer(board)
-        checkWin()
-        checkTie(board)
+
+button_list = []
+
+for i in range(9):
+    btn = Button(window, text="-", font=('consolas', 80), command=lambda idx=i: playerInput(idx))
+    btn.grid(row=i // 3, column=i % 3, sticky="nsew")
+    button_list.append(btn)
+
+label = Label(window, text=currentPlayer + "'s turn", font=('consolas', 40))
+label.grid(row=3, columnspan=3)
+
+reset_button = Button(window, text="Restart", font=('consolas', 40), command=restart_game)
+reset_button.grid(row=4, columnspan=3)
+
+winner_label = Label(window, text="", font=('consolas', 40))
+winner_label.grid(row=5, columnspan=3)
+
+window.mainloop()
